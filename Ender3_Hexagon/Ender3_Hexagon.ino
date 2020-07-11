@@ -32,8 +32,8 @@ int x_distance = 0;
 volatile char is_y_reset = 1;
 int y_distance = 0;
 
-int current_x = 0;	//mm 단위
-int current_y = 0;	//mm 단위
+double current_x = 0;	//mm 단위
+double current_y = 0;	//mm 단위
 
 //속도는 기본 400으로 한다.
 void x_move(int x_dis, int DIR, int x_speed) {
@@ -74,7 +74,7 @@ void reset() {
 	current_y = 0;
 }
 
-void goXLocation(int x, int x_speed) {
+void goXLocation(double x, int x_speed) {
 	int dir = x_right;
 	if (current_x > x) dir = x_left;
 
@@ -82,7 +82,7 @@ void goXLocation(int x, int x_speed) {
 	current_x = x;
 }
 
-void goYLocation(int y, int y_speed) {
+void goYLocation(double y, int y_speed) {
 	int dir = y_down;
 	if (current_y > y) dir = y_up;
 
@@ -90,15 +90,16 @@ void goYLocation(int y, int y_speed) {
 	current_y = y;
 }
 
-void coordinate_shift(int x, int y) {
+void coordinate_shift(double x, double y) {
+	//기본 속도 (400)
 	int x_speed = 400;
 	int y_speed = 400;
 
-	int dis_X = 0;	// X거리
-	int dis_Y = 0;	// Y거리
+	double dis_X = 0;	// X거리
+	double dis_Y = 0;	// Y거리
 
-	int dir_X = x_right;
-	int dir_Y = y_down;
+	int dir_X = x_right;  // X 방향
+	int dir_Y = y_down;   // Y 방향
 
 	if (current_x > x) dir_X = x_left;
 	if (current_y > y) dir_Y = y_up;
@@ -107,10 +108,10 @@ void coordinate_shift(int x, int y) {
 	dis_Y = abs(current_y - y);
 
 	if (dis_X > dis_Y) {
-		y_speed = (int)(400 * ((double)dis_X / (double)dis_Y));
+		y_speed = (int)(400 * (dis_X / dis_Y));
 	}
 	else {
-		x_speed = (int)(400 * ((double)dis_Y / (double)dis_X));
+		x_speed = (int)(400 * (dis_Y / dis_X));
 	}
 
 	x_move(dis_X * ONE_mm, dir_X, x_speed);
@@ -122,17 +123,38 @@ void coordinate_shift(int x, int y) {
 	while (TIMSK1 != 0X00 || TIMSK3 != 0X00);
 }
 
-int set_speed(int x, int y) {
+//빗변을 그릴때, 속도 계산
+int set_speed(double x, double y) {
 	int speed = 0;
 
 	if (x > y) {
-		speed = (int)(400.0 * ((double)y / (double)x));
+		speed = (int)(400.0 * (y / x));
 	}
 	else {
-		speed = (int)(400.0 * ((double)x / (double)y));
+		speed = (int)(400.0 * (x / y));
 	}
 
 	return speed;
+}
+
+//대각선 이동할때, X축이 움직일 거리
+double X_move_distance(double dis, int dir, int angle) {	//대각선의 이동거리와 방향, 삼각비의 기준이 될 각도를 매개변수로 받음
+	double x_move_dis = 0;
+
+	if (dir == x_right) x_move_dis = current_x + (dis * cos(ANGLE(angle)));
+	if (dir == x_left) x_move_dis = current_x - (dis * cos(ANGLE(angle)));
+
+	return x_move_dis;
+}
+
+// 대각선 이동할때, Y축이 움직일 거리
+double Y_move_distance(int dis, int dir, int angle) {	//대각선의 이동거리와 방향, 삼각비의 기준이 될 각도를 매개변수로 받음
+	double y_move_dis = 0;
+
+	if (dir == y_down) y_move_dis = current_y + (dis * sin(ANGLE(angle)));
+	if (dir == y_up) y_move_dis = current_y - (dis * sin(ANGLE(angle)));
+
+	return y_move_dis;
 }
 
 void setup() {
@@ -169,12 +191,21 @@ void setup() {
 void loop() {
 
 	//육각형 좌표 이동(한변의 길이 : 30mm)
-
+	/*
 	coordinate_shift(80, 10);
 	coordinate_shift(80 + (30 * cos(ANGLE(60))), 10 + (30 * sin(ANGLE(60))));
 	coordinate_shift(80, (10 + 2 * (30 * sin(ANGLE(60)))));
 	coordinate_shift(50, (10 + 2 * (30 * sin(ANGLE(60)))));
 	coordinate_shift(50 - (30 * cos(ANGLE(60))), (10 + (30 * sin(ANGLE(60)))));
+	coordinate_shift(50, 10);
+	*/
+	
+	//함수를 사용하여 계산을 줄임
+	coordinate_shift(80, 10);
+	coordinate_shift(X_move_distance(30, x_right, 60), Y_move_distance(30, y_down, 60));
+	coordinate_shift(80, Y_move_distance(30, y_down, 60));
+	coordinate_shift(50, current_y);
+	coordinate_shift(X_move_distance(30, x_left, 60), Y_move_distance(30, y_up, 60));
 	coordinate_shift(50, 10);
 }
 
