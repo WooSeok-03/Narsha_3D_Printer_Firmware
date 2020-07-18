@@ -688,7 +688,7 @@ void setup() {
 void loop() {
 
 	//대각선의 이동속도도 400으로 구현
-
+	/*
 	x_move(50 * cos(ANGLE(30)) * ONE_mm, x_right, 400);
 	while (TIMSK1 != 0x00);
 	y_move(50 * sin(ANGLE(30)) * ONE_mm, y_down, 400);
@@ -696,7 +696,17 @@ void loop() {
 	x_move(50 * cos(ANGLE(30)) * ONE_mm, x_left, X_same_speed(30, 400));
 	y_move(50 * sin(ANGLE(30)) * ONE_mm, y_up, Y_same_speed(30, 400));
 	while (TIMSK1 != 0x00 || TIMSK3 != 0x00);
+	*/
 
+	//5cm 정삼각형 (대각선의 이동속도를 똑같게 함 - 속도 확인)
+	x_move(5 * ONE_cm, x_right, 800);
+	while (TIMSK1 != 0x00);
+	x_move(50 * cos(ANGLE(60)) * ONE_mm, x_left, X_same_speed(60, 800));
+	y_move(50 * sin(ANGLE(60)) * ONE_mm, y_down, Y_same_speed(60, 800));
+	while (TIMSK1 != 0x00 || TIMSK3 != 0x00);
+	x_move(50 * cos(ANGLE(60)) * ONE_mm, x_left, X_same_speed(60, 800));
+	y_move(50 * sin(ANGLE(60)) * ONE_mm, y_up, Y_same_speed(60, 800));
+	while (TIMSK1 != 0x00 || TIMSK3 != 0x00);
 }
 
 char x_step_toggle = 0;
