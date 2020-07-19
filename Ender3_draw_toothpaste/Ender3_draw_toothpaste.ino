@@ -36,7 +36,7 @@ double current_x = 0;	//mm 단위
 double current_y = 0;	//mm 단위
 
 //속도는 기본 400으로 한다.
-void x_move(int x_dis, int DIR, int x_speed) {
+void x_move(double x_dis, int DIR, int x_speed) {
 	//------DIR change------
 	if (DIR == x_left) PORTC = X_LEFT;
 	if (DIR == x_right) PORTC = X_RIGHT;
@@ -49,7 +49,7 @@ void x_move(int x_dis, int DIR, int x_speed) {
 	TIMSK1 = 0x02;
 }
 
-void y_move(int y_dis, int DIR, int y_speed) {
+void y_move(double y_dis, int DIR, int y_speed) {
 	//------DIR change------
 	if (DIR == y_up) PORTC = Y_UP;
 	if (DIR == y_down) PORTC = Y_DOWN;
@@ -74,26 +74,10 @@ void reset() {
 	current_y = 0;
 }
 
-void goXLocation(double x, int x_speed) {
-	int dir = x_right;
-	if (current_x > x) dir = x_left;
-
-	x_move(abs(current_x - x) * ONE_mm, dir, x_speed);	//※abs : 절대값
-	current_x = x;
-}
-
-void goYLocation(double y, int y_speed) {
-	int dir = y_down;
-	if (current_y > y) dir = y_up;
-
-	y_move(abs(current_y - y) * ONE_mm, dir, y_speed);	//※abs : 절대값
-	current_y = y;
-}
-
-void coordinate_shift(double x, double y) {
+void coordinate_shift(double x, double y, int speed) {
 	//기본 속도 (400)
-	int x_speed = 400;
-	int y_speed = 400;
+	//int x_speed = speed;
+	//int y_speed = speed;
 
 	double dis_X = 0;	// X거리
 	double dis_Y = 0;	// Y거리
@@ -107,12 +91,10 @@ void coordinate_shift(double x, double y) {
 	dis_X = abs(current_x - x);
 	dis_Y = abs(current_y - y);
 
-	if (dis_X > dis_Y) {
-		y_speed = (int)(400 * (dis_X / dis_Y));
-	}
-	else {
-		x_speed = (int)(400 * (dis_Y / dis_X));
-	}
+	//atan (y / x) 로 삼각비의 기준이 될 각도를 구할 수 있다.
+	int y_speed = speed * (1 / sin((atan(dis_Y / dis_X))));
+	int x_speed = speed * (1 / cos((atan(dis_Y / dis_X))));
+
 
 	x_move(dis_X * ONE_mm, dir_X, x_speed);
 	y_move(dis_Y * ONE_mm, dir_Y, y_speed);
@@ -121,20 +103,6 @@ void coordinate_shift(double x, double y) {
 	current_y = y;
 
 	while (TIMSK1 != 0X00 || TIMSK3 != 0X00);
-}
-
-//빗변을 그릴때, 속도 계산
-int set_speed(double x, double y) {
-	int speed = 0;
-
-	if (x > y) {
-		speed = (int)(400.0 * (y / x));
-	}
-	else {
-		speed = (int)(400.0 * (x / y));
-	}
-
-	return speed;
 }
 
 //대각선 이동할때, X축이 움직일 거리
@@ -670,9 +638,9 @@ void setup() {
 
 void loop() {
 
-	//치약 짜개 (배열)
+	//치약 짜개 (배열)(대각선 이동 속도도 400으로 설정)
 	for (int i = 0; i < 480; i++) {
-		coordinate_shift(xy_pos[i][0], xy_pos[i][1]);
+		coordinate_shift(xy_pos[i][0], xy_pos[i][1], 400);
 	}
 
 }
