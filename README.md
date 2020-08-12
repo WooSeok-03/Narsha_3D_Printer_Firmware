@@ -14,7 +14,7 @@ __[🖨3D Printer]__
 - Ender3
 
 __[⚙Setting]__   
-1. Sanguino
+1. Sanguino   
 Arduino를 실행시킨 후 환경설정에 들어간다.   
 __추가적인 보드 매니저 URLs__ 에 ```https://raw.githubusercontent.com/Lauszus/Sanguino/master/package_lauszus_sanguino_index.json``` 를 입력   
 메뉴에서 툴 → 보드 → 보드 매니저.. 에서 sanguino를 검색하여 install 한다.   
