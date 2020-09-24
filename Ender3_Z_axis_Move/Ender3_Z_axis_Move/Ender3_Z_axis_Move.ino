@@ -51,8 +51,8 @@ void x_move(double x_dis, int DIR, int x_speed) {
 void z_move(double z_dis, int DIR, int z_speed) {
 	change_XZ = 1;
 	//------DIR change------
-	if (DIR == z_up) PORTB = PORTB | Z_DIR;
-	if (DIR == z_down) PORTB = PORTB & ~(Z_DIR);
+	if (DIR == z_up) PORTB = Z_UP;
+	if (DIR == z_down) PORTB = Z_DOWN;
 	//------Distance change------
 	z_distance = z_dis;
 	//------Speed------
