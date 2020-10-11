@@ -1,4 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-gcode/Toothpaste_Squeezer.gcode linguist-vendored
+gcode/.gcode linguist-vendored
