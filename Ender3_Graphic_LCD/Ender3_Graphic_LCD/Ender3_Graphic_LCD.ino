@@ -12,18 +12,8 @@ void setup() {
 
 	//LCD - Setup
 	//-------------------------------------------------------
-	LCD_set_inst(0x30);
-	LCD_set_inst(0x30);
-	LCD_set_inst(0x30);
-
-	LCD_set_inst(0x30);
-	LCD_set_inst(0x06);
-	LCD_set_inst(0x0C);
-
-	LCD_set_data(0x01);
-	delay(10);
+	LCD_init();
 	LCD_cls();
-	delay(1000);
 	//-------------------------------------------------------
 }
 
@@ -46,21 +36,55 @@ void loop() {
 	//Test
 	//set_data(3, 7, 0x5555);
 
-	//두 자리 숫자 count
-	for (int j = 0; j <= ten_num; j++) {
-		for (int i = 0; i < 8; i++) {
-			set_data(0, 8 + i, numbers[j][i]);
+	// 128x64 draw dot
+	for (int j = 0; j < 128; j++)
+	{
+		for (int i = 0; i < 64; i++)
+		{
+			set_point(j, i);
+			delayMicroseconds(10);
 		}
 	}
+}
 
-	for (int j = 0; j < 10; j++) {
-		for (int i = 0; i < 8; i++) {
-			set_data(1, 8 + i, numbers[j][i]);
-		}
-		delay(500);
+void set_point(int x, int y)
+{
+	int LCD_x = LCD_X_location(x, y);
+	int LCD_y = LCD_Y_location(y);
+	int LCD_value = LCD_point_location(x);
+
+	set_data(LCD_x, LCD_y, LCD_value);
+}
+
+int LCD_point_location(int x)
+{
+	short value = 0x8000;
+	short return_value = 0;
+
+	int X_position = x / 16;
+	int point = x - (16 * X_position);
+
+	return_value = value >> point;
+	for (int i = 0; i < point; i++)
+	{
+		return_value = return_value & ~(0x8000 >> i);
+		return_value = return_value & ~(0x0001 >> i);
+
 	}
-	ten_num++;
-	if (ten_num >= 10) ten_num = 0;
+	return return_value;
+
+}
+
+int LCD_X_location(int x, int y)
+{
+	if (y < 32) return x / 16;
+	else return (x / 16) + 8;
+}
+
+int LCD_Y_location(int y)
+{
+	if (y < 32) return y;
+	else return y - 32;
 }
 
 void LCD_cls() {
@@ -71,6 +95,17 @@ void LCD_cls() {
 			set_data(i, j, 0x0000);
 		}
 	}
+}
+
+void LCD_init()
+{
+	LCD_set_inst(0x30);
+	LCD_set_inst(0x30);
+	LCD_set_inst(0x30);
+
+	LCD_set_inst(0x30);
+	LCD_set_inst(0x06);
+	LCD_set_inst(0x0C);
 }
 
 void set_data(char x, char y, short data) {
