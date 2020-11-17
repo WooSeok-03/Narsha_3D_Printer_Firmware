@@ -1,3 +1,7 @@
+#include "font.h"
+#include "background.h"
+#include "menu.h"
+
 #define OLED_CS   6
 #define OLED_RST  4
 #define OLED_DC   5
@@ -27,10 +31,20 @@ void setup() {
   oled_init();
 
   clear_screen(BLACK);
+
+  draw_bitmap(background);
+
+  string_write(24, 54, WHITE, "0C");
+  string_write(87, 54, WHITE, "0C");
+
+  string_write(6, 75, WHITE, "X:");
+  string_write(6, 92, WHITE, "Y:");
+  string_write(6, 109, WHITE, "Z:");
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop() 
+{
+  
 
 }
 
