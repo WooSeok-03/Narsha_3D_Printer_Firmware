@@ -5,6 +5,13 @@
 #define OLED_SCK  52
 #define OLED_DATA 51
 
+#define RED    0xf800
+#define GREEN  0x07e0
+#define BLUE   0x001f
+#define WHITE  0xffff
+#define BLACK  0x0000
+#define YELLOW 0xffE0
+
 void setup() {
   pinMode(53, OUTPUT); // Mega
   
@@ -18,6 +25,8 @@ void setup() {
 
   spi_init();
   oled_init();
+
+  clear_screen(BLACK);
 }
 
 void loop() {
@@ -116,4 +125,108 @@ void oled_init()
   Write_Data(0x01);
 
   Write_Command(0xAF);  
+}
+
+void clear_screen(unsigned short color)
+{
+  char first_byte = (color & 0xff) >> 8;
+  char second_byte = color & 0xff;
+  Write_Command(0x15);
+  Write_Data(0x00);
+  Write_Data(0x7f);
+
+  Write_Command(0x75);
+  Write_Data(0x00);
+  Write_Data(0x7f);
+
+  Write_Command(0x5c);
+
+  for(int j = 0; j < 128; j++)
+  {
+    for(int i = 0; i < 128; i++)
+    {
+      //Write_Data(0xF8); //RED
+      //White
+      Write_Data(0xFF);
+      Write_Data(0xFF);
+    }
+  }
+  
+}
+
+void put_pixel(char x, char y, unsigned short color)
+{
+  char first_byte = (color & 0xff00) >> 8;
+  char second_byte = color & 0xff;
+  
+  //Column
+  Write_Command(0x15);
+  Write_Data(x); 
+  Write_Data(x);
+
+  //Row
+  Write_Command(0x75);
+  Write_Data(y);
+  Write_Data(y);
+
+  Write_Command(0x5c);
+
+  Write_Data(first_byte);
+  Write_Data(second_byte);
+}
+
+void draw_bitmap(char *bit_map)
+{
+  Write_Command(0x15);
+  Write_Data(0x00);
+  //Write_Data(127); 
+  Write_Data(0x7f);
+
+  Write_Command(0x75);
+  Write_Data(0x00);
+  //Write_Data(96);
+  Write_Data(0x7f);
+
+  Write_Command(0x5c);
+
+  //for(int j = 0; j < 96; j++)
+  for(int j = 0; j < 128; j++)
+  {
+    for(int i = 0; i < 128; i++)
+    {
+      // pgm_byte 에는 포인터만 들어가기 때문에 &를 붙여줌.
+      // 128x128
+      Write_Data(pgm_read_byte(&bit_map[0x46 + 1 + i*2 + j*128*2]));
+      Write_Data(pgm_read_byte(&bit_map[0x46 + i*2 + j*128*2]));
+
+      //128x96
+      //Write_Data(pgm_read_byte(&tiger_128_128_16bit[0x46 + 1 + i*2 + j*128*2]));
+      //Write_Data(pgm_read_byte(&tiger_128_128_16bit[0x46 + i*2 j*128*2]));
+    }
+  }
+}
+
+void font_write(char x, char y, unsigned short color, char font)
+{
+  for(int j = 0; j < 16; j++)
+  {
+    for(int i = 0; i < 8; i++)
+    {
+      if(ascii_8x16[font - 0x20][j] & (0x80 >> i))
+      {
+        put_pixel(x + i, y + j, color);
+      }
+    }
+  }
+}
+
+void string_write(char x, char y, unsigned short color, char *str)
+{
+  char font;
+  int str_len = strlen(str);
+  
+  for(int i = 0; i < str_len; i++)
+  {
+    font_write(x + (i * 10), y, color, *(str + i));
+  }
 }
