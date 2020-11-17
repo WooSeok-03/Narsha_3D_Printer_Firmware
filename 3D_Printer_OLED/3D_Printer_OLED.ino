@@ -40,12 +40,15 @@ void setup() {
   string_write(6, 75, WHITE, "X:");
   string_write(6, 92, WHITE, "Y:");
   string_write(6, 109, WHITE, "Z:");
+  delay(5000);
+
+  //clear_screen(BLACK);
+  //draw_bitmap(menu);
 }
 
 void loop() 
 {
   
-
 }
 
 void spi_init()
@@ -189,7 +192,7 @@ void put_pixel(char x, char y, unsigned short color)
   Write_Data(second_byte);
 }
 
-void draw_bitmap(char *bit_map)
+void draw_bitmap(unsigned char *bit_map)
 {
   Write_Command(0x15);
   Write_Data(0x00);
@@ -243,4 +246,14 @@ void string_write(char x, char y, unsigned short color, char *str)
   {
     font_write(x + (i * 10), y, color, *(str + i));
   }
+}
+
+void draw_line_hori(int x_start, int x_end, int y, unsigned short color)
+{
+  for(int i = x_start; i < x_end - x_start; i++) put_pixel(x_start + i, y, color);
+}
+
+void draw_line_vert(int y_start, int y_end, int x, unsigned short color)
+{
+  for(int i = y_start; i < y_end - y_start; i++) put_pixel(x, y_start + i, color);
 }
