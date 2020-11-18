@@ -1,7 +1,6 @@
 #include <avr/pgmspace.h>
 #include "font.h"
 #include "background.h"
-#include "main_menu.h"
 #include "temptable_1.h"
 #include <stdio.h>
 
@@ -19,8 +18,8 @@
 #define BLACK  0x0000
 #define YELLOW 0xffE0
 
-#define NOZZLE_PIN A0
-#define BED_PIN    A1
+#define NOZZLE_PIN A13
+#define BED_PIN    A14
 
 int current_nozzle_temp = 0;
 int current_bed_temp = 0;
@@ -49,8 +48,8 @@ void setup() {
 }
 
 //임시 온도 변수
-int a = 0;
-int b = 0;
+int end_analog_value = 0;
+int bed_analog_value = 0;
 
 int before_nozzle_temp = 0;
 int before_bed_temp = 0;
@@ -77,23 +76,23 @@ void loop()
   //draw_bitmap();
 
   //이전값
-  before_nozzle_temp = a;
-  before_bed_temp = b;
+  before_nozzle_temp = end_analog_value;
+  before_bed_temp = bed_analog_value;
   
   before_X_location = current_x;
   before_Y_location = current_y;
   before_Z_location = current_z;
 
   /* 저항값 & 위치값 읽기*/
-  a++;
-  b++;
+  bed_analog_value++;
+  end_analog_value++;
   current_x++;
   current_y++;
   //current_z++;
   
   // status 출력
-  nozzle_temp_status(before_nozzle_temp, a);
-  bed_temp_status(before_nozzle_temp, b);
+  nozzle_temp_status(before_nozzle_temp, end_analog_value);
+  bed_temp_status(before_nozzle_temp, bed_analog_value);
   
   X_location_status(before_X_location, current_x);
   Y_location_status(before_Y_location, current_y);
