@@ -16,7 +16,6 @@
 #define BLUE   0x001f
 #define WHITE  0xffff
 #define BLACK  0x0000
-#define YELLOW 0xffE0
 
 #define NOZZLE_PIN A13
 #define BED_PIN    A14
@@ -27,6 +26,20 @@ int current_bed_temp = 0;
 int current_x = 300;
 int current_y = 20;
 int current_z = 30;
+
+int before_nozzle_temp = 0;
+int before_bed_temp = 0;
+
+int before_X_location = 0;
+int before_Y_location = 0;
+int before_Z_location = 0;
+
+char nozzle_temp_buf[100];
+char bed_temp_buf[100];
+
+char X_location_buf[100];
+char Y_location_buf[100];
+char Z_location_buf[100];
 
 void setup() {
   pinMode(53, OUTPUT); // Mega
@@ -47,43 +60,24 @@ void setup() {
   draw_bitmap();
 }
 
-//임시 온도 변수
-int end_analog_value = 0;
-int bed_analog_value = 0;
-
-int before_nozzle_temp = 0;
-int before_bed_temp = 0;
-
-int before_X_location = 0;
-int before_Y_location = 0;
-int before_Z_location = 0;
-
-char nozzle_temp_buf[100];
-char bed_temp_buf[100];
-
-char X_location_buf[100];
-char Y_location_buf[100];
-char Z_location_buf[100];
+int end_analog_value = 60;
+int bed_analog_value = 800;
 
 void loop() 
-{
-  //int N_temp = analogRead(NOZZLE_PIN);
-  //int B_temp = analogRead(BED_PIN);
-
-  //temp_check(NOZZLE_PIN, N_temp);
-  //temp_check(BED_PIN, B_temp);
-  
-  //draw_bitmap();
-
+{ 
   //이전값
-  before_nozzle_temp = end_analog_value;
-  before_bed_temp = bed_analog_value;
+  before_nozzle_temp = current_nozzle_temp;
+  before_bed_temp = current_bed_temp;
   
   before_X_location = current_x;
   before_Y_location = current_y;
   before_Z_location = current_z;
 
   /* 저항값 & 위치값 읽기*/
+  /* analogRead 를 넣어주세요^^*/
+  current_nozzle_temp = temp_check(end_analog_value);
+  current_bed_temp = temp_check(bed_analog_value); 
+  
   bed_analog_value++;
   end_analog_value++;
   current_x++;
@@ -91,13 +85,13 @@ void loop()
   //current_z++;
   
   // status 출력
-  nozzle_temp_status(before_nozzle_temp, end_analog_value);
-  bed_temp_status(before_nozzle_temp, bed_analog_value);
+  nozzle_temp_status(before_nozzle_temp, current_nozzle_temp);
+  bed_temp_status(before_bed_temp, current_bed_temp);
   
   X_location_status(before_X_location, current_x);
   Y_location_status(before_Y_location, current_y);
   Z_location_status(before_Z_location, current_z);
-  delay(1000);
+  delay(2000);  //delay 알아서 조절하면 됨
 }
 
 void X_location_status(int pre_x, int cur_x)
@@ -197,19 +191,19 @@ void draw_nozzle_temp(int temp)
 {
   if(temp >= 100)
   {
-    sprintf(nozzle_temp_buf, "%d", a);
+    sprintf(nozzle_temp_buf, "%d", temp);
     string_write(16, 54, WHITE, nozzle_temp_buf);
     string_write(47, 54, WHITE, "C");
   }
   else if(temp >= 10)
   {
-    sprintf(nozzle_temp_buf, "%d", a);
+    sprintf(nozzle_temp_buf, "%d", temp);
     string_write(20, 54, WHITE, nozzle_temp_buf);
     string_write(43, 54, WHITE, "C");
   }
   else if(temp >= 0)
   {
-    sprintf(nozzle_temp_buf, "%d", a);
+    sprintf(nozzle_temp_buf, "%d", temp);
     string_write(24, 54, WHITE, nozzle_temp_buf);
     string_write(38, 54, WHITE, "C");
   }
@@ -219,19 +213,19 @@ void draw_bed_temp(int temp)
 {
   if(temp >= 100)
   {
-    sprintf(bed_temp_buf, "%d", b);
+    sprintf(bed_temp_buf, "%d", temp);
     string_write(79, 54, WHITE, bed_temp_buf);
     string_write(110, 54, WHITE, "C");
   }
   else if(temp >= 10)
   {
-    sprintf(bed_temp_buf, "%d", b);
+    sprintf(bed_temp_buf, "%d", temp);
     string_write(82, 54, WHITE, bed_temp_buf);
     string_write(105, 54, WHITE, "C");
   }
   else if(temp >= 0)
   {
-    sprintf(bed_temp_buf, "%d", b);
+    sprintf(bed_temp_buf, "%d", temp);
     string_write(86, 54, WHITE, bed_temp_buf);
     string_write(100, 54, WHITE, "C");
   }
@@ -239,49 +233,43 @@ void draw_bed_temp(int temp)
 
 int exact_temp(int temp_value)
 {
-  int tmp1 = 0, tmp2 = 0, tmp3 = 0;
+  float tmp1 = 0;
+  float tmp2 = 0; 
+  float tmp3 = 0;
   
-  for(int i = 0; i < (sizeof(temptable_1) / sizeof(temptable_1[0])); i++)
+  int row = sizeof(temptable_1) / sizeof(temptable_1[0]);
+  
+  for(int i = 1; i < row; i++)
   {
     if(temptable_1[i][0] > temp_value && temptable_1[i-1][0] < temp_value)
+    {
       tmp1 = (temptable_1[i][0] - temptable_1[i-1][0]) / 5;
       tmp2 = temp_value - temptable_1[i-1][0];
-      if(tmp1 == 0) tmp3 = 0;
-      else tmp3 = tmp2 / tmp1;
-      return tmp3;
+      tmp3 = ceil(tmp2 / tmp1);
+      
+      return (int)tmp3;
+    }
   }
 }
 
-void temp_check(int PIN, int temp_value)
+int temp_check(int temp_value)
 { 
   int diff_temp = 0;
-  if(PIN == NOZZLE_PIN)
+  int real_temp = 0;
+  int row = sizeof(temptable_1) / sizeof(temptable_1[0]);
+  
+  for(int i = 0 ; i < row; i++)
   {
-    for(int i = 0; i < (sizeof(temptable_1) / sizeof(temptable_1[0])); i++)
+    if(temp_value == temptable_1[i][0])
     {
-      if(temp_value == temptable_1[i][0])
-      {
-        current_nozzle_temp = temptable_1[i][1];
-      }
-      else
-      {
-        diff_temp = exact_temp(temp_value);
-        current_nozzle_temp = temptable_1[i-1][1] + diff_temp;
-      }
+      real_temp = temptable_1[i][1];
+      return real_temp;
     }
-  }
-  else if(PIN == BED_PIN)
-  {
-    for(int i = 0; i < (sizeof(temptable_1) / sizeof(temptable_1[0])); i++)
+    else if(temptable_1[i][0] > temp_value && temptable_1[i-1][0] < temp_value)
     {
-      if(temp_value == temptable_1[i][0])
-      {
-        current_bed_temp = temptable_1[i][1];
-      }
-      else
-      {
-      current_bed_temp = exact_temp(temp_value);
-      }
+      diff_temp = exact_temp(temp_value);
+      real_temp = temptable_1[i-1][1] - diff_temp;
+      return real_temp;
     }
   }
 }
